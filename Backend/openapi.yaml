@@ -1,0 +1,261 @@
+openapi: 3.0.0
+info:
+  title: Credit Union AI Skill
+  description: >
+    Unified skill for Credit Union Member Intelligence Agent.
+    Handles predictions, retraining, member queries,
+    Excel downloads, PDF reports, and charts.
+  version: 1.0.0
+servers:
+  - url: https://your-skill-url.codeengine.appdomain.cloud
+    description: IBM Cloud Code Engine
+
+paths:
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Check if skill is running correctly
+      responses:
+        '200':
+          description: Service status
+
+  /run-predictions:
+    post:
+      operationId: runPredictions
+      summary: >
+        Run batch predictions for one or all models.
+        Use when manager asks to run predictions, score members,
+        analyze risk, or check attrition loan or propensity.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  description: >
+                    Which model to run.
+                    Use attrition when manager mentions
+                    churn, leaving, attrition, retention.
+                    Use loan when manager mentions
+                    loan offers, eligibility, products.
+                    Use propensity when manager mentions
+                    deposits, savings, propensity.
+                    Use all when manager says run all
+                    or full analysis or all models.
+                  enum: [attrition, loan, propensity, all]
+                  default: attrition
+      responses:
+        '200':
+          description: Job results and summary
+
+  /retrain:
+    post:
+      operationId: retrainModels
+      summary: >
+        Retrain one or all models with latest data.
+        Use when manager asks to retrain, update model,
+        refresh model, or improve accuracy.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  description: >
+                    Which model to retrain.
+                    Use attrition, loan, propensity, or all.
+                  enum: [attrition, loan, propensity, all]
+                  default: attrition
+      responses:
+        '200':
+          description: Retraining results
+
+  /smart-query:
+    post:
+      operationId: smartQuery
+      summary: >
+        Query member risk data with any combination of filters.
+        Use for ANY question about members, risk scores,
+        branches, counties, demographics.
+        Always auto-generates Excel and PDF download links.
+        Use when manager asks to show, list, find, display members
+        or asks how many, which members, top members, etc.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  description: >
+                    Which model results to query.
+                    attrition for churn risk queries.
+                    loan for loan offer queries.
+                    propensity for deposit propensity queries.
+                  enum: [attrition, loan, propensity]
+                  default: attrition
+                tier:
+                  type: string
+                  description: >
+                    Risk tier filter.
+                    Use High when manager says high risk,
+                    at risk, most at risk, high churn.
+                    Use Medium for medium risk.
+                    Use Low for low risk or safe members.
+                  enum: [High, Medium, Low]
+                branch:
+                  type: string
+                  description: >
+                    Branch name filter.
+                    Extract exact branch name when manager
+                    mentions a specific branch.
+                    Examples: Hartford, Cromwell, Glastonbury,
+                    East Hartford, North Haven, New Haven.
+                county:
+                  type: string
+                  description: >
+                    County filter. Extract when manager
+                    mentions a county name.
+                    Examples: Hartford, New Haven,
+                    Middlesex, Fairfield.
+                age_band:
+                  type: string
+                  description: >
+                    Age group filter. Extract when manager
+                    mentions age. Examples: 25-34, 35-44,
+                    45-54, 55-64, 65+
+                income_band:
+                  type: string
+                  description: >
+                    Income level filter. Extract when manager
+                    mentions income level.
+                    Examples: under_30k, 30k_50k, 50k_75k,
+                    75k_100k, over_100k
+                life_stage:
+                  type: string
+                  description: >
+                    Life stage filter. Extract when manager
+                    mentions life stage or demographic.
+                    Examples: retired, student, young_family,
+                    young_single, established, pre_retirement
+                min_prob:
+                  type: number
+                  description: >
+                    Minimum risk probability filter (0 to 1).
+                    Extract when manager says above X percent
+                    or more than X percent risk.
+                    Convert percentage to decimal.
+                    Example: above 80% becomes 0.80
+                top_n:
+                  type: integer
+                  description: >
+                    Number of members to return.
+                    Extract when manager says top X,
+                    first X, show X members, or gives a number.
+                    Default to 20 if no number mentioned.
+      responses:
+        '200':
+          description: >
+            Filtered member data with summary stats,
+            top members table, validation results,
+            and auto-generated Excel and PDF download links.
+
+  /generate-chart:
+    post:
+      operationId: generateChart
+      summary: >
+        Generate a bar chart grouped by any column.
+        Use when manager asks for a chart, graph,
+        visualization, breakdown by branch or county,
+        or wants to see distribution visually.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  enum: [attrition, loan, propensity]
+                  default: attrition
+                group_by:
+                  type: string
+                  description: >
+                    Column to group by for the chart.
+                    Use branch_assignment for branch breakdown.
+                    Use county for county breakdown.
+                    Use age_band for age group breakdown.
+                    Use income_band for income breakdown.
+                    Use life_stage for life stage breakdown.
+                  default: branch_assignment
+                tier:
+                  type: string
+                  description: Filter to specific risk tier
+                  enum: [High, Medium, Low]
+                  default: High
+      responses:
+        '200':
+          description: Chart image download link
+
+  /unified-report:
+    post:
+      operationId: unifiedReport
+      summary: >
+        Generate unified report merging all 3 models per member.
+        Use when manager asks for full report, complete picture,
+        all models together, or unified member view.
+        Shows attrition + loan + propensity scores per member.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branch:
+                  type: string
+                  description: Optional branch filter
+                county:
+                  type: string
+                  description: Optional county filter
+                top_n:
+                  type: integer
+                  description: Optional limit on number of members
+      responses:
+        '200':
+          description: Unified Excel report with all 3 model scores
+
+  /model-health:
+    get:
+      operationId: modelHealth
+      summary: >
+        Check model health and version information.
+        Use when manager asks about model accuracy,
+        model version, when was model trained,
+        or model performance.
+      responses:
+        '200':
+          description: Health status for all 3 models
+
+  /available-filters:
+    get:
+      operationId: availableFilters
+      summary: >
+        Get available filter values for a model.
+        Use when manager asks what branches are available,
+        what counties exist, or what options are available.
+      parameters:
+        - name: model
+          in: query
+          schema:
+            type: string
+            enum: [attrition, loan, propensity]
+            default: attrition
+      responses:
+        '200':
+          description: Available filter values

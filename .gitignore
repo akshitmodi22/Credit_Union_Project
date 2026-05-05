@@ -1,0 +1,11 @@
+Backend/venv/
+Backend/__pycache__/
+Backend/*.pdf
+Backend/*.xlsx
+Backend/*.png
+Backend/*.csv
+Backend/.env
+Frontend/node_modules/
+Frontend/dist/
+.DS_Store
+__MACOSX/

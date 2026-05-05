@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+ibm-cos-sdk
+ibm-watsonx-ai
+pandas
+numpy
+joblib
+matplotlib
+reportlab
+openpyxl
+python-dotenv
+squarify
