@@ -5,7 +5,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+COPY main.py config.py cos_client.py filters.py ./
+COPY routers/ ./routers/
+COPY reports/ ./reports/
+COPY utils/ ./utils/
+COPY jobs/ ./jobs/
 
 EXPOSE 8080
 
