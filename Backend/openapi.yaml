@@ -7,7 +7,7 @@ info:
     Excel downloads, PDF reports, and charts.
   version: 1.0.0
 servers:
-  - url: https://your-skill-url.codeengine.appdomain.cloud
+  - url: https://cu-backend.29ibyaelqfgx.us-south.codeengine.appdomain.cloud
     description: IBM Cloud Code Engine
 
 paths:

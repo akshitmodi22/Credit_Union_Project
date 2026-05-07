@@ -38,10 +38,49 @@ TIER_COLORS = {
     'Standard'          : '#16A34A',
 }
 
+# ── Model-aware color palettes ─────────────────────────────────
+MODEL_COLORS = {
+    'attrition': {
+        'primary': '#DC2626',
+        'gradient': ['#991B1B', '#B91C1C', '#DC2626', '#EF4444', '#F87171',
+                     '#FCA5A5', '#FECACA', '#FEE2E2', '#FFF5F5', '#FFFAFA'],
+        'label': 'Risk'
+    },
+    'loan': {
+        'primary': '#0EA5E9',
+        'gradient': ['#0369A1', '#0284C7', '#0EA5E9', '#38BDF8', '#7DD3FC',
+                     '#BAE6FD', '#E0F2FE', '#F0F9FF', '#F5FBFF', '#FAFEFF'],
+        'label': 'Opportunity'
+    },
+    'propensity': {
+        'primary': '#9333EA',
+        'gradient': ['#581C87', '#6B21A8', '#7C3AED', '#8B5CF6', '#A78BFA',
+                     '#C4B5FD', '#DDD6FE', '#EDE9FE', '#F5F3FF', '#FAF5FF'],
+        'label': 'Propensity'
+    },
+    'master': {
+        'primary': '#4F46E5',
+        'gradient': ['#312E81', '#3730A3', '#4338CA', '#4F46E5', '#6366F1',
+                     '#818CF8', '#A5B4FC', '#C7D2FE', '#E0E7FF', '#EEF2FF'],
+        'label': 'Priority'
+    },
+}
+
+def _get_model_color(model, tier=None):
+    """Get the primary color for a model."""
+    return MODEL_COLORS.get(model, MODEL_COLORS['master'])['primary']
+
+def _get_model_gradient(model, count):
+    """Get a gradient palette for a model with `count` bars."""
+    gradient = MODEL_COLORS.get(model, MODEL_COLORS['master'])['gradient']
+    if count <= len(gradient):
+        return gradient[:count]
+    return [gradient[i % len(gradient)] for i in range(count)]
+
 PALETTE = list(COLORS.values())
 
 
-def _style_chart(fig, ax, title, subtitle=None):
+def _style_chart(fig, ax, title, subtitle=None, format_yaxis=True):
     """Apply consistent professional styling."""
     fig.patch.set_facecolor('white')
     ax.set_facecolor('#FAFAFA')
@@ -50,7 +89,8 @@ def _style_chart(fig, ax, title, subtitle=None):
     ax.spines['left'].set_color('#E2E8F0')
     ax.spines['bottom'].set_color('#E2E8F0')
     ax.tick_params(colors='#475569', labelsize=9)
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x):,}'))
+    if format_yaxis:
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x):,}'))
     ax.grid(axis='y', alpha=0.3, color='#CBD5E1', linestyle='--')
 
     ax.set_title(title, fontsize=14, fontweight='bold', color='#1E293B',
@@ -70,10 +110,11 @@ def _style_chart(fig, ax, title, subtitle=None):
 def build_bar_chart(grouped, model, group_by, tier, filename, top_n=10):
     """Standard vertical bar chart — member counts by group."""
     series = pd.Series(grouped).sort_values(ascending=False).head(top_n)
+    colors = _get_model_gradient(model, len(series))
 
     fig, ax = plt.subplots(figsize=(12, 6))
     bars = ax.bar(range(len(series)), series.values,
-                  color=TIER_COLORS.get(tier, COLORS['primary']),
+                  color=colors,
                   edgecolor='white', width=0.7, zorder=3)
 
     ax.set_xticks(range(len(series)))
@@ -87,7 +128,8 @@ def build_bar_chart(grouped, model, group_by, tier, filename, top_n=10):
                 f'{int(h):,}', ha='center', va='bottom',
                 fontsize=8, fontweight='bold', color='#475569')
 
-    title = f"{tier or 'All'} {model.title()} — by {group_by.replace('_', ' ').title()}"
+    model_label = MODEL_COLORS.get(model, MODEL_COLORS['master'])['label']
+    title = f"{tier or 'All'} {model.title()} {model_label} — by {group_by.replace('_', ' ').title()}"
     _style_chart(fig, ax, title, f"{len(series)} groups shown · {int(series.sum()):,} total members")
 
     plt.tight_layout()
@@ -101,10 +143,12 @@ def build_bar_chart(grouped, model, group_by, tier, filename, top_n=10):
 def build_horizontal_bar(grouped, model, group_by, tier, filename, top_n=10):
     """Horizontal bar — better for long category names."""
     series = pd.Series(grouped).sort_values(ascending=True).tail(top_n)
+    colors = _get_model_gradient(model, len(series))
+    colors.reverse()  # reverse so darkest is at top (highest value)
 
     fig, ax = plt.subplots(figsize=(10, max(6, len(series) * 0.5)))
     bars = ax.barh(range(len(series)), series.values,
-                   color=TIER_COLORS.get(tier, COLORS['primary']),
+                   color=colors,
                    edgecolor='white', height=0.6, zorder=3)
 
     ax.set_yticks(range(len(series)))
@@ -117,8 +161,9 @@ def build_horizontal_bar(grouped, model, group_by, tier, filename, top_n=10):
                 f'{int(w):,}', ha='left', va='center',
                 fontsize=8, fontweight='bold', color='#475569')
 
-    title = f"{tier or 'All'} {model.title()} — by {group_by.replace('_', ' ').title()}"
-    _style_chart(fig, ax, title)
+    model_label = MODEL_COLORS.get(model, MODEL_COLORS['master'])['label']
+    title = f"{tier or 'All'} {model.title()} {model_label} — by {group_by.replace('_', ' ').title()}"
+    _style_chart(fig, ax, title, format_yaxis=False)
 
     plt.tight_layout()
     plt.savefig(filename, dpi=150, bbox_inches='tight')

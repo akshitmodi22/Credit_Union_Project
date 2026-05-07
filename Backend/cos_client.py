@@ -7,6 +7,7 @@ from ibm_botocore.client import Config
 import pandas as pd
 import json
 import io
+import os
 
 from config import (
     BUCKET, COS_ENDPOINT,
@@ -16,7 +17,10 @@ from config import (
 
 # ── Base URL for download endpoint ─────────────────────────────
 # Change this when deployed to Code Engine
-DOWNLOAD_BASE_URL = "http://localhost:8080"
+DOWNLOAD_BASE_URL = os.getenv(
+    "DOWNLOAD_BASE_URL",
+    "https://cu-backend.29ibyaelqfgx.us-south.codeengine.appdomain.cloud"
+).rstrip("/")
 
 
 def get_cos():
